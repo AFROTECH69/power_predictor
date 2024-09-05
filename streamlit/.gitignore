@@ -1,0 +1,21 @@
+# Ignore virtual environment directories
+.venv/
+venv/
+
+# Ignore Streamlit configuration and hidden files
+.streamlit/
+streamlit/
+
+# Ignore Python cache files
+__pycache__/
+*.py[cod]
+
+# Ignore Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Ignore system files
+.DS_Store
+Thumbs.db
+
+# Ignore environment files
+.env

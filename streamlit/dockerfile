@@ -1,0 +1,11 @@
+# Use the official Debian Bullseye base image
+FROM ubuntu
+
+# Set the working directory inside the container
+WORKDIR /app
+
+# Copy all files from the current directory on the host to /app in the container
+COPY . /app
+
+# Set an entrypoint to prevent the container from shutting down
+ENTRYPOINT ["tail", "-f", "/dev/null"]

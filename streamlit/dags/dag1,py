@@ -1,0 +1,86 @@
+from airflow import DAG
+from airflow.operators.bash import BashOperator
+from airflow.operators.dummy import DummyOperator
+from airflow.operators.python import BranchPythonOperator
+from airflow.utils.dates import days_ago
+from datetime import timedelta
+import subprocess
+
+# Default arguments for the DAG
+default_args = {
+    'owner': 'airflow',
+    'depends_on_past': False,
+    'start_date': days_ago(1),
+    'retries': 1,
+    'retry_delay': timedelta(minutes=5),
+}
+
+# Define the DAG
+dag = DAG(
+    'streamlit_workflow',
+    default_args=default_args,
+    description='A DAG for running streaming and training tasks',
+    schedule_interval=timedelta(minutes=5),  # Modify as needed
+    catchup=False,
+)
+
+# Task: Run get_streaming.py in the background
+run_get_streaming = BashOperator(
+    task_id='run_get_streaming',
+    bash_command='nohup python3 ~/Desktop/streamlit/get_streaming.py > /dev/null 2>&1 &',
+    dag=dag,
+)
+
+# Task: Run bash.py in the background
+run_bash_script = BashOperator(
+    task_id='run_bash_script',
+    bash_command='nohup python3 ~/Desktop/streamlit/bash.py > /dev/null 2>&1 &',
+    dag=dag,
+)
+
+# Task: Wait for 1 minute
+wait_1_min = BashOperator(
+    task_id='wait_1_min',
+    bash_command='sleep 60',
+    dag=dag,
+)
+
+# Task: Validate data with validate.py
+def validate_data():
+    output = subprocess.getoutput('python3 ~/Desktop/streamlit/validate.py')
+    if output.strip():  # Ensures non-empty output
+        return 'run_app'
+    else:
+        return 'skip_app'
+
+validate_task = BranchPythonOperator(
+    task_id='validate_data',
+    python_callable=validate_data,
+    dag=dag,
+)
+
+# Task: Run app.py in the background
+run_app = BashOperator(
+    task_id='run_app',
+    bash_command='nohup python3 ~/Desktop/streamlit/app.py > /dev/null 2>&1 &',
+    dag=dag,
+)
+
+# Task: Skip running app.py if no data is validated
+skip_app = DummyOperator(
+    task_id='skip_app',
+    dag=dag,
+)
+
+# Task: Train model every Friday
+train_model = BashOperator(
+    task_id='train_model',
+    bash_command='python3 ~/Desktop/streamlit/train_models.py',
+    dag=dag,
+    schedule_interval='0 0 * * 5',  # Every Friday at midnight
+)
+
+# Task dependencies
+[run_get_streaming, run_bash_script] >> wait_1_min >> validate_task
+validate_task >> [run_app, skip_app]
+run_app >> train_model

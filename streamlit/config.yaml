@@ -1,0 +1,10 @@
+data_sources:
+  batch:
+    file_path: "combined.csv"
+  streaming:
+    uri: "ws://localhost:8765"
+model:
+  directory: "model"
+  prediction_model_name: "power_prediction_model_20240818_202224.pkl"
+  scaler_name: "scaler_20240818_202224.pkl"
+update_interval: 1  # in seconds

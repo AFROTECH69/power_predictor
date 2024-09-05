@@ -1,0 +1,62 @@
+import csv
+import random
+from datetime import datetime, timedelta
+
+
+def generate_mock_data(sensor_id, start_date, num_days):
+    data = []
+    current_date = start_date
+    for day in range(num_days):
+        filename = f"s{sensor_id}_{current_date.strftime('%d_%m_%Y')}.csv"
+        with open(filename, "w", newline="") as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerow(
+                [
+                    "Process_ID",
+                    "ID",
+                    "Timestamp",
+                    "Voltage",
+                    "Current",
+                    "Power",
+                    "Energy",
+                    "Frequency",
+                    "PF",
+                ]
+            )
+
+            for i in range(1440):  # 1440 minutes in a day
+                timestamp = current_date + timedelta(minutes=i)
+                voltage = round(random.uniform(220, 240), 2)
+                current = round(random.uniform(0.02, 0.05), 2)
+                power = round(random.uniform(0, 0.5), 2)
+                energy = round(random.uniform(0.001, 0.003), 3)
+                frequency = round(random.uniform(49.5, 50.5), 2)
+                pf = round(random.uniform(0, 0.1), 2)
+
+                row = [
+                    f"Station{sensor_id:02d}",
+                    i + 1,
+                    timestamp.strftime("%Y-%m-%d %H:%M:%S"),
+                    voltage,
+                    current,
+                    power,
+                    energy,
+                    frequency,
+                    pf,
+                ]
+                writer.writerow(row)
+                data.append(row)
+
+        current_date += timedelta(days=1)
+
+    return data
+
+
+# Generate data for 3 sensors, for 7 days starting from August 15, 2024
+start_date = datetime(2024, 8, 15)
+num_days = 7
+
+for sensor_id in range(2, 5):  # Sensors 2, 3, and 4
+    generate_mock_data(sensor_id, start_date, num_days)
+
+print("Mock data generation complete.")
